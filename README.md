@@ -10,6 +10,18 @@ This is the boilerplate for the Stock Price Checker project. Instructions for bu
 - In-memory store for likes with per-IP deduplication.
 - Functional tests covering all required behaviors.
 
+### Example responses
+
+Single stock request:
+```json
+{"stockData":{"stock":"GOOG","price":"1234.56","likes":5}}
+```
+
+Two-stock comparison:
+```json
+{"stockData":[{"stock":"GOOG","price":"1234.56","rel_likes":1},{"stock":"MSFT","price":"234.56","rel_likes":-1}]}
+```
+
 ## Running the project locally
 
 1. Install dependencies:
