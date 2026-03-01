@@ -1,13 +1,14 @@
-const chaiHttp = require('chai-http');
 const chai = require('chai');
-const assert = chai.assert;
+const chaiHttp = require('chai-http');
 const server = require('../server');
 
 chai.use(chaiHttp);
+const expect = chai.expect;
 
 suite('Functional Tests', function() {
   // store likes count between tests
   let initialLikes;
+  let initialLikes = 0;
 
   test('Viewing one stock: GET request to /api/stock-prices/', function(done) {
     chai.request(server)
@@ -25,6 +26,14 @@ suite('Functional Tests', function() {
         assert.isNumber(sd.price);
         assert.isNumber(sd.likes);
         initialLikes = sd.likes;
+      .query({ stock: 'GOOG' })
+      .end(function(err, res) {
+        expect(res).to.have.status(200);
+        expect(res.body).to.have.property('stockData');
+        expect(res.body.stockData).to.have.property('stock', 'GOOG');
+        expect(res.body.stockData).to.have.property('price');
+        expect(res.body.stockData).to.have.property('likes');
+        initialLikes = res.body.stockData.likes;
         done();
       });
   });
@@ -37,6 +46,15 @@ suite('Functional Tests', function() {
         assert.equal(res.status, 200);
         const sd = res.body.stockData;
         assert.equal(sd.likes, initialLikes + 1);
+      .query({ stock: 'GOOG', like: true })
+      .end(function(err, res) {
+        expect(res).to.have.status(200);
+        expect(res.body).to.have.property('stockData');
+        expect(res.body.stockData).to.have.property('stock', 'GOOG');
+        expect(res.body.stockData).to.have.property('price');
+        expect(res.body.stockData).to.have.property('likes');
+        expect(res.body.stockData.likes).to.be.at.least(initialLikes);
+        initialLikes = res.body.stockData.likes;
         done();
       });
   });
@@ -49,6 +67,14 @@ suite('Functional Tests', function() {
         assert.equal(res.status, 200);
         const sd = res.body.stockData;
         assert.equal(sd.likes, initialLikes + 1);
+      .query({ stock: 'GOOG', like: true })
+      .end(function(err, res) {
+        expect(res).to.have.status(200);
+        expect(res.body).to.have.property('stockData');
+        expect(res.body.stockData).to.have.property('stock', 'GOOG');
+        expect(res.body.stockData).to.have.property('price');
+        expect(res.body.stockData).to.have.property('likes');
+        expect(res.body.stockData.likes).to.equal(initialLikes); // Like should not increase
         done();
       });
   });
@@ -69,6 +95,15 @@ suite('Functional Tests', function() {
           assert.isString(sd.stock);
           assert.isNumber(sd.price);
           assert.isNumber(sd.rel_likes);
+      .query({ stock: ['GOOG', 'MSFT'] })
+      .end(function(err, res) {
+        expect(res).to.have.status(200);
+        expect(res.body).to.have.property('stockData');
+        expect(res.body.stockData).to.be.an('array').that.has.length(2);
+        res.body.stockData.forEach(stockObj => {
+          expect(stockObj).to.have.property('stock');
+          expect(stockObj).to.have.property('price');
+          expect(stockObj).to.have.property('rel_likes');
         });
         done();
       });
@@ -93,4 +128,20 @@ suite('Functional Tests', function() {
       });
   });
 
+  test('Viewing two stocks and liking them: GET request to /api/stock-prices/', function(done) {
+    chai.request(server)
+      .get('/api/stock-prices')
+      .query({ stock: ['GOOG', 'MSFT'], like: true })
+      .end(function(err, res) {
+        expect(res).to.have.status(200);
+        expect(res.body).to.have.property('stockData');
+        expect(res.body.stockData).to.be.an('array').that.has.length(2);
+        res.body.stockData.forEach(stockObj => {
+          expect(stockObj).to.have.property('stock');
+          expect(stockObj).to.have.property('price');
+          expect(stockObj).to.have.property('rel_likes');
+        });
+        done();
+      });
+  });
 });
